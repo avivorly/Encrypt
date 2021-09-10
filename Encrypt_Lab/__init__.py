@@ -24,4 +24,3 @@ class Simulator:
             print('The number of bits was overwritten to 100 because it was too small')
         return Sim.statistics(num)
 
-Simulator.run()

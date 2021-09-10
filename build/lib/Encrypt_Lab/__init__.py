@@ -1,11 +1,11 @@
-from PyQt5.QtWidgets import QLabel, QSizePolicy, QVBoxLayout,QHBoxLayout,QGridLayout, QWidget, QScrollArea, QGroupBox, QMainWindow, QScrollBar, QApplication
-import Encrypt_Lab.Sim
+from PyQt5.QtWidgets import QMainWindow, QApplication
+import Sim
 
 import sys
 
 class Simulator:
     @classmethod
-    def run(cls):
+    def run(cls): # open the simulator gui
         app = QApplication(sys.argv)
 
         m = QMainWindow()
@@ -16,5 +16,11 @@ class Simulator:
         m.show()
 
         sys.exit(app.exec_())
+    @classmethod
 
-# Simulator.run()
+    def statistics(cls, num=10): # statistics analysis
+        if num < 100: # don't start when num < 100
+            num = 100
+            print('The number of bits was overwritten to 100 because it was too small')
+        return Sim.statistics(num)
+

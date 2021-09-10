@@ -1,15 +1,16 @@
-import sys
-from PyQt5.QtWidgets import QApplication
+# import from evey possible location
 try:
     from Input import Input
 except:
     from Encrypt_Lab.Input import Input
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QLabel, QSizePolicy, QVBoxLayout,QHBoxLayout,QGridLayout, QWidget, QScrollArea, QGroupBox, QMainWindow, QScrollBar
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QGridLayout, QWidget, QScrollArea
 import numpy as np
 
+# text labels
 md5 = {
+    'top label': 'Enter your message below',
     'msg':['Message','The message that Alice will send to Bob.'],
     'Binary_Massage':['Binary Massage','The binary sequence which is equivalent to the message.'],
     'alice_values':["Alice's Bits", "The bits that are sent by Alice to Bob."],
@@ -29,7 +30,7 @@ md5 = {
     'play':['Start procudre','start botton'],
 }
 
-
+# translate char to binary
 def to_binary(s):
     h = {
         '!': 26,
@@ -49,6 +50,7 @@ def to_binary(s):
         binary = binary + '{0:05b}'.format(num)
     return binary
 
+# translate from binary
 def from_binary(s):
     h = {
         26:'!' ,
@@ -75,44 +77,64 @@ def from_binary(s):
 
     return word
 
+# convert boolean (0\1) into basis (+\x)
 def basis(arr):
   return ['+' if x else 'x' for x in arr]
 
+# simulating transerfing if data between two bases with random choice when bases are different
 def transfer(base1, base2, values):
     new_values = values.copy()
     diff = base1 != base2
     new_values[diff] = rand(np.count_nonzero((diff)))
     return new_values
 
+# mark the unmatched values
 def transfer_view(base1, base2, values):
     new_values = values.copy()
     new_values[base1!=base2] = 2
     return new_values
 
+# remove the unmatched values
 def clean(base1, base2, values):
     return np.delete(values, np.argwhere(base1 != base2))
 
+# mark the unmatched values
 def clean_view(base1, base2, values):
     values_new = values.copy()
     values_new[base1!=base2] = 2
     return values_new
 
+# generate random sequence of length N
 def rand(N):
-  return np.random.randint(2, size=int(N))
+    return np.random.randint(2, size=int(N), dtype=bool)
 
+# calculating statical properties of the distribution
+def statistics(num):
+    safe_len = int(num)
+    alice_bases = rand(safe_len)
+    eav_bases = rand(safe_len)
+    bob_bases = rand(safe_len)
+    alice_values = rand(safe_len)
+    eav_values = transfer(eav_bases, alice_bases, alice_values)
+    bob_values = transfer(eav_bases, bob_bases, eav_values)
+    alice_values_clean = clean_view(bob_bases, alice_bases, alice_values)
+    bob_values_clean = clean_view(bob_bases, alice_bases, bob_values)
+    bob_final = clean(bob_bases, alice_bases, bob_values)
+    alice_final = clean(bob_bases, alice_bases, alice_values)
+
+    h = {'Bits count': safe_len, 'Matching bases count': len(alice_final),
+         'Matching values count': np.count_nonzero(alice_final == bob_final),
+         'Mismatching values count': np.count_nonzero(alice_final != bob_final)} # the actual return dictionary
+    h['Disagreement ratio'] = h['Mismatching values count'] / h['Matching bases count']
+    return h
+
+
+# the gui class with PyQt5
 class Mod(QScrollArea):
     def __init__(self, parent, s=''):
         super().__init__(parent)
 
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
-        # self.setStyleSheet("""
-        #     border: 100px black;
-        #     font-size: 22px;
-        #     font-weight: bold;
-        #     text-align: right;
-        #     background-color: rgb(200,200,200);
-        #     color: rgb(180,50,50);
-        # """)
         self.ws = []
         self.w = w = QWidget()
 
@@ -124,15 +146,24 @@ class Mod(QScrollArea):
 
         lay = QVBoxLayout()
         self.setLayout(lay)
-        ww = Input(w, 'string', 'message', opts={'def': 'YES!','vertical':'yes', 'center_title':True, 'center_text':True, 'font':20})
+
+
+        # make sure only valid chars enter the textline
+        def reg(value):
+            import re
+            value = value.upper()
+            allowed = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','Q','W','Y','Z','!','?','+','-','$']
+            return ''.join(c for c in value if c in allowed)
+
+        # Input will create gui inputs and link them to o dictionary
+        ww = Input(w, 'string', 'message', opts={'filter':reg,'title':md5['top label'], 'def': 'Y','vertical':'yes', 'center_title':True, 'center_text':True, 'font':20})
         ww.setStyleSheet('background-color: #1ffab2; font-size: 15px; ')
-        Input(w, 'bool', 'eav', opts={'def':1,'vertical': 'yes','center_title':True})
-        Input(w, 'integer', 'test', opts={'def': 5, 'vertical': 'yes','center_title':True })
+        Input(w, 'bool', 'eav', opts={'title':'is Eve present','def':1,'vertical': 'yes','center_title':True})
+        Input(w, 'integer', 'test', opts={'title':'number of test bits','def': 5, 'vertical': 'yes','center_title':True })
         self.play_btn = QPushButton(md5['play'][0])
         self.play_btn.setToolTip(md5['play'][1])
         l.addWidget(self.play_btn)
         self.play_btn.clicked.connect(self.play)
-        # self.play()
 
     def widget(self, w, center = True, big=False):
         if str(w.__class__)=="<class 'PyQt5.QtWidgets.QLabel'>":
@@ -146,6 +177,15 @@ class Mod(QScrollArea):
             self.l.addWidget(w)
 
     def play(self):
+        flag = True
+        while flag:
+            try:
+                self.play_real()
+                flag = False
+            except:
+                pass
+
+    def play_real(self):
         for w in self.ws:
             w.deleteLater()
         self.ws = []
@@ -154,9 +194,10 @@ class Mod(QScrollArea):
         self.eav = self.w.o['eav']
         self.check_len = self.w.o['test']
         real_len = len(self.Binary_Massage)
-        test_len = max(self.w.o['test'],10)
+        test_len = max(self.w.o['test'],1)
         sigma = int((real_len + test_len) ** 0.5)
         safe_len = int(2 * (real_len + test_len) + 1 * sigma)
+        print(real_len)
         self.alice_bases = rand(safe_len)
         self.eav_bases = rand(safe_len)
         self.bob_bases = rand(safe_len)
@@ -190,11 +231,10 @@ class Mod(QScrollArea):
         self.dyc_msg = np.bitwise_xor(self.enc_msg, self.real_key_bob)
         self.dyc_msg_str = from_binary(self.dyc_msg)
 
-        # self.key = self.alice_values_clean[self.check_len:]
-
         first_line = []
         second_line = []
         labels = {}
+        # print every step in that array
         for i, s in enumerate(['msg','Binary_Massage', 'alice_values', 'alice_bases',  'eav_bases', 'eav_values',
                   'bob_bases', 'bob_values', 'bob_values_clean', 'alice_final','bob_final', 'safe_channel', 'bob_after_test','enc_msg', 'dyc_msg', 'dyc_msg_str']):#'remobe different bases','alice_values_clean', 'bob_values_clean','safe_channel', 'long_key', 'real_key','enc_msg', 'dyc_msg']):
             if 'eav' in s and not self.eav:
@@ -214,7 +254,10 @@ class Mod(QScrollArea):
                 if 'base' in s:
                     text = basis(getattr(self, s))
                 else:
-                    text = getattr(self, s)
+                    try:
+                        text = getattr(self, s).astype(int) # from bool to int
+                    except:
+                        text = getattr(self, s)
 
                 for j in range(safe_len):
                     color = 'black'
@@ -231,7 +274,7 @@ class Mod(QScrollArea):
                         if s in ['msg',]:#'dyc_msg'
                             t.setFixedSize(30*5+24, 30)
                         else:
-                            t.setFixedSize(30,30)
+                            t.setFixedSize(30, 30)
                     t.setStyleSheet(f'border-color:{color};  border-width: 3px;border-style: solid; text-align: center')
                     t.setAlignment(Qt.AlignCenter)
                     if s == 'msg':
@@ -244,12 +287,13 @@ class Mod(QScrollArea):
                     ll.addWidget(t, i, j)
                     arr.append(t)
                 if s != 'msg':
-                    self.widget(widget)
+                    self.widget(widget) # add another widget
                 else:
-                    self.ws.append(widget)
-                    self.l.addWidget(widget, alignment=Qt.AlignLeft)
-                    widget.move(0,0)
+                    self.ws.append(widget) # add another widget
+                    self.l.addWidget(widget)
+                    widget.move(0,0) # move to begging
 
+        # color similar columns
         for i, (a_v, a_b, b_v, b_b) in enumerate(zip(labels['alice_values'], labels['alice_bases'], labels['bob_values'], labels['bob_bases'])):
             if a_b.text() != b_b.text():
                 color = 'red'
@@ -261,97 +305,5 @@ class Mod(QScrollArea):
                 if col in labels:
                     labels[col][i].setStyleSheet(f'border-color:{color};  border-width: 3px;border-style: solid; text-align: center')
 
-            # bob.setStyleSheet(f'border-color:{color};  border-width: 3px;border-style: solid; text-align: center')
-            # ali.setStyleSheet(f'border-color: {color}')
-            # bob.setStyleSheet(f'border-color: {color}')
         if error:
-            self.widget(QLabel('key was not long enogth'))
-
-            # self.widget(QLabel(text))
-        # break
-
-
-
-
-
-
-
-        # Input(w, 'integer', 'time',opts={'def':1})
-        # Input(w, 'float', 'days', opts={'def': 9})
-        # for inpt in [
-        #     ['rate', [0, 5]],
-        #     ['modulation', [0, 1]],
-        #     ['spurious', [0, 0.1], 0.01],
-        #     ['2 pi omega', [0, 2 * 3.1415927], 1],
-        #
-        #     ['N', [3, 1000]],
-        # ]:
-        #     if len(inpt) == 3:
-        #         title, minmax, deff = inpt
-        #     if len(inpt) == 2:
-        #         title, minmax = inpt
-        #         deff = None
-        #     is_float = not (title in ['N'])
-        #     args = {'slide_minmax': minmax, 'float': is_float}
-        #     if deff is not None:
-        #         args['def'] = deff
-        #     Input(w, 'slider', title, opts=args)
-        # Input(w, 'radio', 'data to use:',{'radios':['simulated','original'], 'def_index':0})
-
-
-        # start = QPushButton('start')
-        # start.clicked.connect(self.crate_data)
-        # l.addWidget(start)
-        # full_start = QPushButton('full start')
-        # full_start.clicked.connect(partial(self.crate_data, True, True) )
-        # l.addWidget(full_start)
-        # w.resize(250, 150)
-        # w.move(300, 300)
-        # w.setWindowTitle('Simple')
-        # self.figs = []
-        # self.axes = []
-        #
-        # for name in ['rate', 'main_fit','data', 'fft', 'omegas']:
-        #     fig_name = f'{name}_fig'
-        #     ax_name = f'{name}_ax'
-        #     fig = Figure()
-        #     setattr(self, fig_name, fig)
-        #     self.figs.append(fig)
-        #
-        #     ax = fig.subplots()
-        #     setattr(self, ax_name, ax)
-        #     self.axes.append(ax)
-        #
-        #
-        # self.rate_fig.suptitle('daily rate')
-        # data_w = FigureCanvas(self.rate_fig)
-        # data_w.setMinimumSize(200, 200)
-        # l.addWidget(data_w)
-        #
-        #
-        # self.data_fig.suptitle('fit to data')
-        #
-        #
-        # data_w = FigureCanvas(self.data_fig)
-        # data_w.setMinimumSize(200, 200)
-        # l.addWidget(data_w)
-        #
-        # fit_w = FigureCanvas(self.main_fit_fig)
-        # fit_w.setMinimumSize(200, 200)
-        # # l.addWidget(fit_w)
-
-
-
-
-#
-# app = QApplication(sys.argv)
-#
-# m = QMainWindow()
-# m.resize(1000, 1000)
-# w= Mod(m)
-#
-# m.setCentralWidget(w)
-# m.show()
-#
-# sys.exit(app.exec_())
-#
+            self.widget(QLabel('key was not long enough'))

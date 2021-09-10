@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (QFileDialog, QComboBox,QRadioButton, QApplication, QLabel, QLineEdit,QDoubleSpinBox,QSlider,
                              QCheckBox,
-                             QPushButton, QSpinBox, QColorDialog)
+                             QPushButton, QWidget,QGroupBox,QSpinBox, QColorDialog, QFrame,QVBoxLayout)
 
 from PyQt5.QtCore import Qt
 import numpy as np
@@ -11,12 +11,10 @@ import os
 import re
 # TODO  create also oo hash that saves all needed data, so [o,oo] contains all need to save an open anything
 # from TextEditor import TextEditor as HTMLEDITOR
-
 try:
     from AWidget import AWidget
 except:
     from Encrypt_Lab.AWidget import AWidget
-
 # from codeeditor import QCodeEditor
 # from code_editor.d import CodeEditor
 
@@ -277,8 +275,14 @@ class Input(AWidget):
                     w.setMinimumHeight(78)
             except:
                 1
-
-            self.layout().addWidget(w)
+            if tp == 'bool':
+                wid = QWidget()
+                wid_lay = QVBoxLayout()
+                wid.setLayout(wid_lay)
+                wid_lay.addWidget(w)
+                self.layout().addWidget(wid)
+            else:
+                self.layout().addWidget(w)
             getattr(w, func_name).connect(self.update_dic)
         if w or tp == 'radio':
             if self.tp == 'slider' and 'float' in self.opts and self.opts['float']:
@@ -329,7 +333,12 @@ class Input(AWidget):
                 self.opts['connect'](value)
             except:
                 self.opts['connect'](value, self.name)
-
+        print(self.opts)
+        if 'filter' in self.opts:
+            filtered_value = self.opts['filter'](value)
+            if filtered_value != value:
+                self.w.setText(filtered_value)
+                value = filtered_value
         if 'connect' in self.opts: # TODO should be extea connect
             self.opts['connect'](value)
 
