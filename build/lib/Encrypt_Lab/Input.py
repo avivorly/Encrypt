@@ -57,7 +57,6 @@ class Input(AWidget):
             else:
                 self.layout().addWidget(QLabel(label))
             if 'font' in opts and opts['font']:
-                print('font')
                 l.setStyleSheet(f"font-size: {opts['font']}px")
 
 
@@ -333,7 +332,6 @@ class Input(AWidget):
                 self.opts['connect'](value)
             except:
                 self.opts['connect'](value, self.name)
-        print(self.opts)
         if 'filter' in self.opts:
             filtered_value = self.opts['filter'](value)
             if filtered_value != value:

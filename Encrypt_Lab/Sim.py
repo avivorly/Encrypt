@@ -1,8 +1,8 @@
 # import from evey possible location
 try:
-    from Input import Input
-except:
     from Encrypt_Lab.Input import Input
+except:
+    from Input import Input
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QGridLayout, QWidget, QScrollArea
@@ -197,7 +197,6 @@ class Mod(QScrollArea):
         test_len = max(self.w.o['test'],1)
         sigma = int((real_len + test_len) ** 0.5)
         safe_len = int(2 * (real_len + test_len) + 1 * sigma)
-        print(real_len)
         self.alice_bases = rand(safe_len)
         self.eav_bases = rand(safe_len)
         self.bob_bases = rand(safe_len)
