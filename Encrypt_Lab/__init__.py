@@ -19,4 +19,9 @@ class Simulator:
     @classmethod
 
     def statistics(cls, num=10): # statistics analysis
+        if num < 100: # don't start when num < 100
+            num = 100
+            print('The number of bits was overwritten to 100 because it was too small')
         return Sim.statistics(num)
+
+Simulator.run()

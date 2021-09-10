@@ -122,10 +122,10 @@ def statistics(num):
     bob_final = clean(bob_bases, alice_bases, bob_values)
     alice_final = clean(bob_bases, alice_bases, alice_values)
 
-    h = {'bits count': safe_len, 'match base count': len(alice_final),
-         'match result count': np.count_nonzero(alice_final == bob_final),
-         'missmatch result count': np.count_nonzero(alice_final != bob_final)} # the actual return dictionary
-    h['missmatch ratio'] = h['missmatch result count'] / h['match base count']
+    h = {'Bits count': safe_len, 'Matching bases count': len(alice_final),
+         'Matching values count': np.count_nonzero(alice_final == bob_final),
+         'Mismatching values count': np.count_nonzero(alice_final != bob_final)} # the actual return dictionary
+    h['Disagreement ratio'] = h['Mismatching values count'] / h['Matching bases count']
     return h
 
 
@@ -177,6 +177,15 @@ class Mod(QScrollArea):
             self.l.addWidget(w)
 
     def play(self):
+        flag = True
+        while flag:
+            try:
+                self.play_real()
+                flag = False
+            except:
+                pass
+
+    def play_real(self):
         for w in self.ws:
             w.deleteLater()
         self.ws = []
@@ -277,7 +286,7 @@ class Mod(QScrollArea):
 
                     ll.addWidget(t, i, j)
                     arr.append(t)
-                if s != 'msg'r:
+                if s != 'msg':
                     self.widget(widget) # add another widget
                 else:
                     self.ws.append(widget) # add another widget
