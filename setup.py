@@ -3,7 +3,7 @@ import codecs
 import os
 
 
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 DESCRIPTION = 'Encrypt'
 LONG_DESCRIPTION = 'Quatno,m Encrypt'
 

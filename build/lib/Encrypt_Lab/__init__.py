@@ -1,5 +1,10 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication
-import Sim
+
+
+try:
+    import Sim
+except:
+    from Encrypt_Lab import Sim
 
 import sys
 
